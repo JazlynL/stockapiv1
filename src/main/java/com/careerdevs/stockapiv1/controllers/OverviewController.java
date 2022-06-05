@@ -77,11 +77,12 @@ public class OverviewController {
         }
     }
 
-    @PostMapping("/test")
-    public ResponseEntity<?> testUploadOverview(RestTemplate restTemplate) {
+    @PostMapping("/{symbol}")
+    public ResponseEntity<?> testUploadOverview(RestTemplate restTemplate,@PathVariable String symbol) {
         try {
+            String apiKey = env.getProperty("AV_API_KEY");
 
-            String url = BASE_URL + "&symbol=IBM&apikey=demo";
+            String url = BASE_URL + "&symbol="+ symbol +"&apikey="+apiKey;
             Overview alphaVantageResponse = restTemplate.getForObject(url, Overview.class);
 
             // this is going to be a saved overview
@@ -89,8 +90,6 @@ public class OverviewController {
 
 
             System.out.println(url);
-
-
             //checking to see if the data is null
             if (alphaVantageResponse == null) {
                 return ApiError.customApiError("Did not recieve response from AV.", 404);
