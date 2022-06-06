@@ -17,6 +17,6 @@ public class ApiError {
         return ResponseEntity.status(status).body(message);
     }
     public static void throwErr(int status,String message) throws HttpClientErrorException{
-        throw  new HttpClientErrorException(HttpStatus.valueOf(status),message)
+        throw  new HttpClientErrorException(HttpStatus.valueOf(status),message);
     }
 }
