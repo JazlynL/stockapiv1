@@ -13,5 +13,5 @@ public interface OverviewRepository extends CrudRepository<Overview,Long> {
     public  Optional<Overview> findByNameType(String name);
     public List<Overview> findByExchange (String exchange);
     public List <Overview> findByCurrency(String currency);
-    public
+    public List<Overview> findByCountry(String country);
 }
