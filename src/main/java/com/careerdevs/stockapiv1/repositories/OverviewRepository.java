@@ -8,5 +8,5 @@ import java.util.Optional;
 
 public interface OverviewRepository extends CrudRepository<Overview,Long> {
     public Optional <Overview> findBySymbol(String symbol);
-    public List<Overview> findByExchange (String symbol);
+    public List<Overview> findByExchange (String exchange);
 }
