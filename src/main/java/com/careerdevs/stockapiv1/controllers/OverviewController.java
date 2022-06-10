@@ -86,6 +86,7 @@ public class OverviewController {
             Overview alphaVantageResponse = restTemplate.getForObject(url, Overview.class);
 
             // this is going to be a saved overview
+            assert alphaVantageResponse != null;
             Overview savedOverview = overviewRepository.save(alphaVantageResponse);
 
 
