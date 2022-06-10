@@ -1,6 +1,7 @@
 package com.careerdevs.stockapiv1.models;
 
 
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.persistence.*;
@@ -9,6 +10,7 @@ import javax.persistence.*;
 public class Overview {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+
     @Column(name="id", nullable = false, unique = true)
     private long Id;
 
@@ -105,6 +107,7 @@ public class Overview {
         return industry;
     }
 
+
     public long getMarketCap() {
         return marketCap;
     }
@@ -120,6 +123,7 @@ public class Overview {
     public String getDividendDate() {
         return dividendDate;
     }
+
 
     @Override
     public String toString() {
@@ -139,5 +143,6 @@ public class Overview {
                 ", \"dividendDate\":\"" + dividendDate + '"' +
                 '}';
     }
+
 
 }
