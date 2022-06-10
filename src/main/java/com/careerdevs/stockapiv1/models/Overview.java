@@ -1,51 +1,6 @@
 package com.careerdevs.stockapiv1.models;
 
-/*"Symbol": "GOOGL",
-  "AssetType": "Common Stock",
-  "Name": "Alphabet Inc",
-  "Description": "Alphabet Inc. is an American multinational conglomerate headquartered in Mountain View, California. It was created through a restructuring of Google on October 2, 2015, and became the parent company of Google and several former Google subsidiaries. The two co-founders of Google remained as controlling shareholders, board members, and employees at Alphabet. Alphabet is the world's fourth-largest technology company by revenue and one of the world's most valuable companies.",
-  "CIK": "1652044",
-  "Exchange": "NASDAQ",
-  "Currency": "USD",
-  "Country": "USA",
-  "Sector": "TECHNOLOGY",
-  "Industry": "SERVICES-COMPUTER PROGRAMMING, DATA PROCESSING, ETC.",
-  "Address": "1600 AMPHITHEATRE PARKWAY, MOUNTAIN VIEW, CA, US",
-  "FiscalYearEnd": "December",
-  "LatestQuarter": "2022-03-31",
-  "MarketCapitalization": "1510115508000",
-  "EBITDA": "95841001000",
-  "PERatio": "20.7",
-  "PEGRatio": "0.806",
-  "BookValue": "385.58",
-  "DividendPerShare": "0",
-  "DividendYield": "0",
-  "EPS": "110.58",
-  "RevenuePerShareTTM": "406.89",
-  "ProfitMargin": "0.276",
-  "OperatingMarginTTM": "0.305",
-  "ReturnOnAssetsTTM": "0.15",
-  "ReturnOnEquityTTM": "0.308",
-  "RevenueTTM": "270334001000",
-  "GrossProfitTTM": "146698000000",
-  "DilutedEPSTTM": "110.58",
-  "QuarterlyEarningsGrowthYOY": "-0.063",
-  "QuarterlyRevenueGrowthYOY": "0.23",
-  "AnalystTargetPrice": "3303.83",
-  "TrailingPE": "20.7",
-  "ForwardPE": "20",
-  "PriceToSalesRatioTTM": "5.59",
-  "PriceToBookRatio": "5.89",
-  "EVToRevenue": "5.15",
-  "EVToEBITDA": "13.63",
-  "Beta": "1.061",
-  "52WeekHigh": "3030.93",
-  "52WeekLow": "2196.49",
-  "50DayMovingAverage": "2561.5",
-  "200DayMovingAverage": "2748.15",
-  "SharesOutstanding": "300764000",
-  "DividendDate": "None",
-  "ExDividendDate": "None"*/
+
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -55,55 +10,65 @@ import javax.persistence.*;
 public class Overview {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", nullable = false, unique = true)
+
+    @Column(name="id", nullable = false, unique = true)
     private long Id;
 
-   @JsonProperty("Symbol")
-   @Column(name = "symbol", nullable = false, unique = true)
-   private String symbol;
+    @JsonProperty("Symbol")
+    @Column(name="symbol", nullable = false, unique = true)
+    private String symbol;
 
-   @JsonProperty("AssetType")
-    @Column(name = "asset_type", nullable = false)
+    @JsonProperty("AssetType")
+    @Column(name="asset_type", nullable = false)
     private String assetType;
 
     @JsonProperty("Name")
-    @Column(name = "Name", nullable = false, unique = true)
+    @Column(name="name", nullable = false, unique = true)
     private String name;
 
+    // Exchange: NASDAQ
     @JsonProperty("Exchange")
-    @Column(name = "exchange", nullable = false)
+    @Column(name="exchange", nullable = false)
     private String exchange;
 
+    // Currency: USD
     @JsonProperty("Currency")
-    @Column(name = "currency", nullable = false)
+    @Column(name="currency", nullable = false)
     private String currency;
 
+    // Country: USA
     @JsonProperty("Country")
-    @Column(name = "country", nullable = false)
+    @Column(name="country", nullable = false)
     private String country;
 
+    // Sector: TECHNOLOGY
     @JsonProperty("Sector")
-    @Column(name = "sector", nullable = false)
+    @Column(name="sector", nullable = false)
     private String sector;
 
+    // Industry: ELECTRONIC COMPUTER
     @JsonProperty("Industry")
-    @Column(name = "industry", nullable = false)
+    @Column(name="industry", nullable = false)
     private String industry;
 
+    // MarketCapitalization: 119748354000
     @JsonProperty("MarketCapitalization")
-    @Column(name = "market_cap", nullable = false)
-    private String marketCap;
+    @Column(name="market_cap", nullable = false)
+    private long marketCap;
 
+    // 52WeekHigh: 140.18
     @JsonProperty("52WeekHigh")
-    @Column(name = "year_High", nullable = false)
-    private float  yearHigh;
+    @Column(name="year_high", nullable = false)
+    private float yearHigh;
 
+    // 52WeekLow: 111.84
     @JsonProperty("52WeekLow")
-    @Column(name = "year_Low", nullable = false)
+    @Column(name="year_low", nullable = false)
     private float yearLow;
 
+    // DividendDate: 2022-05-12
     @JsonProperty("DividendDate")
-    @Column(name ="dividend_Date", nullable = false)
+    @Column(name="dividend_date", nullable = false)
     private String dividendDate;
 
     public long getId() {
@@ -142,7 +107,8 @@ public class Overview {
         return industry;
     }
 
-    public String getMarketCap() {
+
+    public long getMarketCap() {
         return marketCap;
     }
 
@@ -158,40 +124,25 @@ public class Overview {
         return dividendDate;
     }
 
-    // create the JSON to String method.
 
     @Override
     public String toString() {
-        return "Overview{" +
-                "Id=" + Id +
-                ", symbol='" + symbol + '\'' +
-                ", assetType='" + assetType + '\'' +
-                ", name='" + name + '\'' +
-                ", exchange='" + exchange + '\'' +
-                ", currency='" + currency + '\'' +
-                ", country='" + country + '\'' +
-                ", sector='" + sector + '\'' +
-                ", industry='" + industry + '\'' +
-                ", marketCap='" + marketCap + '\'' +
-                ", yearHigh=" + yearHigh +
-                ", yearLow=" + yearLow +
-                ", dividendDate='" + dividendDate + '\'' +
+        return "{" +
+                "\"Id\":" + Id +
+                ", \"symbol\":\"" + symbol + '"' +
+                ", \"assetType\":\"" + assetType + '"' +
+                ", \"name\":\"" + name + '"' +
+                ", \"exchange\":\"" + exchange + '"' +
+                ", \"currency\":\"" + currency + '"' +
+                ", \"country\":\"" + country + '"' +
+                ", \"sector\":\"" + sector + '"' +
+                ", \"industry\":\"" + industry + '"' +
+                ", \"marketCap\":" + marketCap +
+                ", \"yearHigh\":" + yearHigh +
+                ", \"yearLow\":" + yearLow +
+                ", \"dividendDate\":\"" + dividendDate + '"' +
                 '}';
     }
 
-
-    //    "Symbol": "GOOGL",
-//            "AssetType": "Common Stock",
-//            "Name": "Alphabet Inc",
-//            "Description": "Alphabet Inc. is an American multinational conglomerate headquartered in Mountain View, California. It was created through a restructuring of Google on October 2, 2015, and became the parent company of Google and several former Google subsidiaries. The two co-founders of Google remained as controlling shareholders, board members, and employees at Alphabet. Alphabet is the world's fourth-largest technology company by revenue and one of the world's most valuable companies.",
-//
-//             "Exchange": "NASDAQ",
-//            "Currency": "USD",
-//            "Country": "USA",
-//            "Sector": "TECHNOLOGY",
-//            "Industry": "SERVICES-COMPUTER PROGRAMMING, DATA PROCESSING, ETC.",
-//            "MarketCapitalization": "1510115508000",
-//            "52WeekHigh": "3030.93",
-//            "52WeekLow": "2196.49"
 
 }
