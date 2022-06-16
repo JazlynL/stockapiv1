@@ -232,7 +232,7 @@ public class OverviewController {
         }
 
     }
-    @GetMapping("/dividend/{dividend}")
+    /*@GetMapping("/dividend/{dividend}")
     private ResponseEntity<?> getOverviewByDividend(@PathVariable String dividend){
         try{
             List<Overview> foundDividend = overviewRepository.findbyDividend(dividend);
@@ -248,6 +248,7 @@ public class OverviewController {
             return ApiError.genericApiError(e);
         }
     }
+    */
 
     // creating a method for the 52 year high and low both float values.
 
