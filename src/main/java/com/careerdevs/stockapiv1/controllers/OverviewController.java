@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/overview")
@@ -25,6 +25,7 @@ public class OverviewController {
     private OverviewRepository overviewRepository;
 
     private final String BASE_URL = "https://www.alphavantage.co/query?function=OVERVIEW";
+    private final String Api_Key = env.getProperty("AV_API_KEY");
 
 
     // Get All Overview from SQL database.
@@ -52,7 +53,7 @@ public class OverviewController {
     private ResponseEntity<?> findById(@PathVariable String id ){
         try{
             long idFound = Long.parseLong(id);
-            Optional<Overview> foundOverview = overviewRepository.findById(idFound);
+            List <Overview> foundOverview = overviewRepository.findById(idFound);
             if(foundOverview.isEmpty()){
                 ApiError.throwErr(404, id +"Id entered was not found.");
             }
@@ -69,191 +70,194 @@ public class OverviewController {
             return  ApiError.genericApiError(e);
         }
     }
+    // create a find and delete route for symbol and sector.
+    @GetMapping("/{field}/{value}")
+    private ResponseEntity<?> getOverviewByField(@PathVariable String field, @PathVariable String value){
+        try{
+            List<Overview> foundOverview = null;
+            field = field.toLowerCase();
+            // condesing the code to a switch statement.so we are able to look it up by  key value.
+            switch(field){
+                case "id"-> foundOverview = overviewRepository.findById(Long.parseLong(value));
+                case "symbol"-> foundOverview = overviewRepository.findBySymbol(value);
+                case "asset"-> foundOverview = overviewRepository.findByAssetType(value);
+                case "sector"-> foundOverview = overviewRepository.findBySector(value);
+                case "name " -> foundOverview = overviewRepository.findByName(value);
+                case "currency" -> foundOverview = overviewRepository.findByCurrency(value);
+                case "country" -> foundOverview = overviewRepository.findByCountry(value);
+                case "exchange" -> foundOverview = overviewRepository.findByExchange(value);
+            }
+
+            if(foundOverview == null || foundOverview.isEmpty()){
+                ApiError.throwErr(404, field+" did not match any field entered.");
+            }
+            return ResponseEntity.ok(foundOverview);
+
+        } catch (HttpClientErrorException e) {
+            return ApiError.customApiError(e.getMessage(), e.getStatusCode().value());}
+        catch(NumberFormatException e){
+            return  ApiError.customApiError("Invalid Id: Must be a Number"+field , 400);
+
+
+        }catch(Exception e){
+            return  ApiError.genericApiError(e);
+        }
+
+    }
+
+    @DeleteMapping("/{field}/{value}")
+    private ResponseEntity<?> deleteOverviewByField(@PathVariable String field, @PathVariable String value){
+        try{
+            List<Overview> foundOverview = null;
+            field = field.toLowerCase();
+            switch(field){
+                case "id"-> foundOverview = overviewRepository.deleteById(Long.parseLong(value));
+                case "symbol"-> foundOverview = overviewRepository.deleteBySymbol(value);
+                case "asset"-> foundOverview = overviewRepository.deleteByAssetType(value);
+                case "sector"-> foundOverview = overviewRepository.deleteBySector(value);
+                case "name " -> foundOverview = overviewRepository.deleteByName(value);
+                case "currency" -> foundOverview = overviewRepository.deleteByCurrency(value);
+                case "country" -> foundOverview = overviewRepository.deleteByCountry(value);
+                case "exchange" -> foundOverview = overviewRepository.deleteByExchange(value);
+            }
+
+            if (foundOverview== null|| foundOverview.isEmpty()){
+                ApiError.throwErr(404,field+"did not match any overview ");
+            }
+            return ResponseEntity.ok(foundOverview);
+        } catch (HttpClientErrorException e) {
+            return ApiError.customApiError(e.getMessage(), e.getStatusCode().value());}
+        catch(NumberFormatException e){
+            return  ApiError.customApiError("Invalid Id: Must be a Number"+ field , 400);
+
+
+        }catch(Exception e){
+            return  ApiError.genericApiError(e);
+        }
+
+    }
+
     @GetMapping("/symbol/{symbol}")
     public ResponseEntity<?> getOverviewBySymbol(RestTemplate restTemplate, @PathVariable String symbol) {
         try {
 
-            Optional<Overview> foundOverview = overviewRepository.findBySymbol(symbol);
+            List<Overview> foundOverview = overviewRepository.findBySymbol(symbol);
             if(foundOverview.isEmpty()){
                 ApiError.throwErr(404, symbol+ " did not match any overview");
             }
             return ResponseEntity.ok(foundOverview);
+            }catch (HttpClientErrorException e) {
+                return ApiError.customApiError(e.getMessage(), e.getStatusCode().value());
+            }// we will always set this exception last because its the most generic exception that can be found
+             catch (Exception e) {
+                return ApiError.genericApiError(e);
+            }
+    }
+
+    @PostMapping("/{symbol}")
+
+     public ResponseEntity<?> uploadOverviewBySymbol(RestTemplate restTemplate, @PathVariable String symbol){
+        try{
+          // we are  going to set the url
+           String url = BASE_URL + "&symbol= " + symbol + "&apikey="+ Api_Key;
+         // this is the response
+            Overview response = restTemplate.getForObject(url , Overview.class);
+
+            if(response == null){
+                ApiError.throwErr(500,"No response from the AV api");
+            }else if (response.getSymbol() == null){
+                ApiError.throwErr(404,symbol + " no symbol found that you have entered");
+            }
+            Overview savedOverview = overviewRepository.save(response);
+
+            return ResponseEntity.ok(savedOverview);
+
+
+
+        } catch (HttpClientErrorException e) {
+            return ApiError.customApiError(e.getMessage(), e.getStatusCode().value());}
+        catch (DataIntegrityViolationException e){
+            return  ApiError.customApiError("Can not duplicate stock input.",400);
+        }catch(Exception e){
+            return  ApiError.genericApiError(e);
+        }
+    }
+
+    @PostMapping("/testUpload")
+    public ResponseEntity<?> testUpload(RestTemplate restTemplate){
+        try{
+            String [] testUploads = {"IBM","GOOG","AAPL","TM","GS"};
+            ArrayList <Overview> overviews = new ArrayList<>();
+            for(int i = 0 ; i < testUploads.length;i++){
+                String symbol = testUploads[i];
+
+                String url = BASE_URL +"&symbol=" + symbol + "&apikey=" + Api_Key;
+                Overview alphaResponse = restTemplate.getForObject(url,Overview.class);
+                if(alphaResponse == null){
+                    ApiError.throwErr(500, " No response from AV");
+                }else if(alphaResponse.getSymbol() == "{}"){
+                    ApiError.throwErr(404, symbol+ " the symbol entered is invalid");
+                }
+
+                overviews.add(alphaResponse);
+            }
+
+            Iterable<Overview> savedOverview = overviewRepository.saveAll(overviews);
+
+
+            return  ResponseEntity.ok(savedOverview);
+
         }catch (HttpClientErrorException e) {
-            return ApiError.customApiError(e.getMessage(), e.getStatusCode().value());
-        }// we will always set this exception last because its the most generic exception that can be found
-         catch (Exception e) {
-            return ApiError.genericApiError(e);
-        }
-    }
-    @GetMapping("/asset/{asset}")
-    private ResponseEntity<?> getOverviewByAsset(@PathVariable String asset)
-    {try{
-
-        List<Overview> foundAsset = overviewRepository.findByAssetType(asset);
-        if(foundAsset.isEmpty()){
-            ApiError.throwErr(404,asset + " asset Type was not found.");
-        }
-        return ResponseEntity.ok(foundAsset);
-
-    }catch(HttpClientErrorException e){
-        return ApiError.customApiError(e.getMessage(), e.getStatusCode().value());
-    }catch(Exception e){
-        return ApiError.genericApiError(e);
-    }
-
-    }
-
-    @GetMapping("/name/{name}")
-    private  ResponseEntity<?> getOverviewByName(@PathVariable String name){
-        try{
-            Optional<Overview> foundName = overviewRepository.findByNameType(name);
-            if(foundName.isEmpty()){
-                ApiError.throwErr(404,name+ " name was not found.");
-            }
-            return ResponseEntity.ok(foundName);
-        }catch(HttpClientErrorException e){
-            return  ApiError.customApiError(e.getMessage(),e.getStatusCode().value());
+            return ApiError.customApiError(e.getMessage(), e.getStatusCode().value());}
+        catch (DataIntegrityViolationException e){
+            return  ApiError.customApiError("Can not duplicate stock input.",400);
         }catch(Exception e){
-            return ApiError.genericApiError(e);
+            return  ApiError.genericApiError(e);
         }
     }
 
-
-    @GetMapping("/exchange/{exchange}")
-    private ResponseEntity<?> getOverviewByExchange (@PathVariable String exchange){
-
-        try{
-            List<Overview> foundOverview = overviewRepository.findByExchange(exchange);
-
-             if(foundOverview.isEmpty()){
-                 ApiError.throwErr(404, exchange +" did not match any overview");
-             }
-
-             return  ResponseEntity.ok(foundOverview);
-
-        }catch (HttpClientErrorException e) {
-            return ApiError.customApiError(e.getMessage(), e.getStatusCode().value());
-        }// we will always set this exception last because its the most generic exception that can be found
-        catch (Exception e) {
-            return ApiError.genericApiError(e);
-        }
-    }
-
-
-    @GetMapping("/currency/{currency}")
-
-     private ResponseEntity<?> getOverviewByCurrency(@PathVariable String currency){
-        try{
-            List<Overview> foundCurrency = overviewRepository.findByCurrency(currency);
-
-            if(foundCurrency.isEmpty()){
-                ApiError.throwErr(404,currency+" currency entered was not found.");
-            }
-            return ResponseEntity.ok(foundCurrency);
-
-        }catch(HttpClientErrorException e){
-            return ApiError.customApiError(e.getMessage(),e.getStatusCode().value());
-        }catch(Exception e)
-        {
-            return ApiError.genericApiError(e);
-        }
-    }
-
-    @GetMapping("/country/{country}")
-
-      private ResponseEntity<?> getOverviewByCountry(@PathVariable String country){
-        try{
-            List<Overview> foundCountry = overviewRepository.findByCountry(country);
-
-            if (foundCountry.isEmpty()){
-                ApiError.throwErr(404, country+ " country entered was not found");
-            }
-            return ResponseEntity.ok(foundCountry);
+//
+//    @DeleteMapping("/all")
+//    public ResponseEntity<?> deleteAllOverView(){
+//      long foundItems = overviewRepository.count();
+//      if(foundItems == 0){
+//          return ResponseEntity.ok("no items have been found");
+//      }
+//      overviewRepository.deleteAll();
+//
+//      return  ResponseEntity.ok("these are deleted items entries "+foundItems);
+//
+//    }
+//    @GetMapping("/asset/{asset}")
+//    private ResponseEntity<?> getOverviewByAsset(@PathVariable String asset)
+//    {try{
+//
+//     //   List<Overview> foundAsset = overviewRepository.findByAssetType(asset);
+//        if(foundAsset.isEmpty()){
+//            ApiError.throwErr(404,asset + " asset Type was not found.");
+//        }
+//        return ResponseEntity.ok(foundAsset);
+//
+//    }catch(HttpClientErrorException e){
+//        return ApiError.customApiError(e.getMessage(), e.getStatusCode().value());
+//    }catch(Exception e){
+//        return ApiError.genericApiError(e);
+//    }
+//
+//    }
 
 
-        }catch(HttpClientErrorException e ){
-            return ApiError.customApiError(e.getMessage(),e.getStatusCode().value());
-        }catch(Exception e){
-           return ApiError.genericApiError(e);
-        }
-    }
-
-    @GetMapping("/sector/{sector}")
-    private ResponseEntity<?> getOverviewBySector(@PathVariable String sector){
-        try{
-            List<Overview> foundSector = overviewRepository.findBySector(sector);
-
-            if(foundSector.isEmpty()){
-                ApiError.throwErr(404,sector+" sector entered was not found");
-            }
-
-            return ResponseEntity.ok(foundSector);
-        }catch(HttpClientErrorException e ){
-            return ApiError.customApiError(e.getMessage(),e.getStatusCode().value());
-        }catch(Exception e){
-            return ApiError.genericApiError(e);
-        }
-    }
-
-    @GetMapping("/industry/{industry}")
-    private ResponseEntity<?> getOverviewByIndustry(@PathVariable String industry){
-        try{
-            List<Overview> foundIndustry = overviewRepository.findByIndustry(industry);
-            if(foundIndustry.isEmpty()){
-                ApiError.throwErr(404, industry+ " industry entered was  not found");
-            }
-            return ResponseEntity.ok(foundIndustry);
-        }catch(HttpClientErrorException e ){
-            return ApiError.customApiError(e.getMessage(),e.getStatusCode().value());
-        }catch(Exception e){
-            return ApiError.genericApiError(e);
-        }
-    }
-
-    @GetMapping("/marketcap/{marketcap}")
-
-    private ResponseEntity<?> getOverviewByMarketCap(@PathVariable String marketCap){
-
-        try{
-            Long newMarket = Long.parseLong(marketCap);
-            List<Overview> foundMarketCap = overviewRepository.findByMarketCap(newMarket);
-
-            if(foundMarketCap.isEmpty()){
-                ApiError.throwErr(404, marketCap +" Market capitalization entered was not found.");
-            }
-
-            return ResponseEntity.ok(foundMarketCap);
 
 
-        }catch(HttpClientErrorException e ){
-            return ApiError.customApiError(e.getMessage(),e.getStatusCode().value());
-        }catch(Exception e){
-            return ApiError.genericApiError(e);
-        }
 
-    }
-    /*@GetMapping("/dividend/{dividend}")
-    private ResponseEntity<?> getOverviewByDividend(@PathVariable String dividend){
-        try{
-            List<Overview> foundDividend = overviewRepository.findbyDividend(dividend);
-            if(foundDividend.isEmpty()){
-                ApiError.throwErr(404, dividend+"dividened entered not found");
-            }
 
-            return  ResponseEntity.ok(foundDividend);
 
-        }catch(HttpClientErrorException e ){
-            return ApiError.customApiError(e.getMessage(),e.getStatusCode().value());
-        }catch(Exception e){
-            return ApiError.genericApiError(e);
-        }
-    }
-    */
+
+
+
+
 
     // creating a method for the 52 year high and low both float values.
-
-
-
 
     @PostMapping("/{symbol}")
     private ResponseEntity<?> testUploadOverview(RestTemplate restTemplate,@PathVariable String symbol) {
@@ -298,10 +302,6 @@ public class OverviewController {
     }
 
 
-
-
-
-
     // delete all OVERview from SQL database
     //return # of delete overview
     @DeleteMapping("/all")
@@ -326,7 +326,7 @@ public class OverviewController {
     private ResponseEntity<?> deleteId(@PathVariable String id){
         try{
             long overviewId = Long.parseLong(id);
-            Optional<Overview> foundOverview = overviewRepository.findById(overviewId);
+            List <Overview> foundOverview = overviewRepository.findById(overviewId);
             if(foundOverview.isEmpty()){
                 return ApiError.customApiError(id +" did not match any overview ", 404);
             }
