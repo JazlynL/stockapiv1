@@ -25,7 +25,9 @@ public class OverviewController {
     private OverviewRepository overviewRepository;
 
     private final String BASE_URL = "https://www.alphavantage.co/query?function=OVERVIEW";
-    private final String Api_Key = env.getProperty("AV_API_KEY");
+
+
+
 
 
     // Get All Overview from SQL database.
@@ -79,14 +81,24 @@ public class OverviewController {
             // condesing the code to a switch statement.so we are able to look it up by  key value.
             switch(field){
                 case "id"-> foundOverview = overviewRepository.findById(Long.parseLong(value));
-                case "symbol"-> foundOverview = overviewRepository.findBySymbol(value);
-                case "asset"-> foundOverview = overviewRepository.findByAssetType(value);
-                case "sector"-> foundOverview = overviewRepository.findBySector(value);
                 case "name " -> foundOverview = overviewRepository.findByName(value);
+                case "symbol"-> foundOverview = overviewRepository.findBySymbol(value);
+                case "exchange" -> foundOverview = overviewRepository.findByExchange(value);
+                case "assettype"-> foundOverview = overviewRepository.findByAssetType(value);
+                case "sector"-> foundOverview = overviewRepository.findBySector(value);
                 case "currency" -> foundOverview = overviewRepository.findByCurrency(value);
                 case "country" -> foundOverview = overviewRepository.findByCountry(value);
-                case "exchange" -> foundOverview = overviewRepository.findByExchange(value);
+                case "marketcapgte" -> foundOverview = overviewRepository.findByMarketCapGreaterThanEqual(Long.parseLong(value));
+                case "marketcaplte" -> foundOverview = overviewRepository.findByMarketCapLessThanEqual(Long.parseLong(value));
+                case "yearhighgte" -> foundOverview = overviewRepository.findByYearHighGreaterThanEqual(Float.parseFloat(value));
+                case "yearhighlte" -> foundOverview = overviewRepository.findByYearHighLessThanEqual(Float.parseFloat(value));
+                case "yearlowgte" -> foundOverview = overviewRepository.findByYearLowGreaterThanEqual(Float.parseFloat(value));
+                case "yearlowlte" -> foundOverview = overviewRepository.findByYearLowLessThanEqual(Float.parseFloat(value));
+                case "ddafter" -> foundOverview = overviewRepository.findByDividendDateGreaterThanEqual(value);
+                case "ddbefore" -> foundOverview = overviewRepository.findByDividendDateLessThanEqual(value);
             }
+
+          //  if(overviewRepository.findByDividendDateGreaterThanEqual(value) )
 
             if(foundOverview == null || foundOverview.isEmpty()){
                 ApiError.throwErr(404, field+" did not match any field entered.");
@@ -105,6 +117,9 @@ public class OverviewController {
 
     }
 
+    // get mapping for industry
+
+
     @DeleteMapping("/{field}/{value}")
     private ResponseEntity<?> deleteOverviewByField(@PathVariable String field, @PathVariable String value){
         try{
@@ -112,13 +127,19 @@ public class OverviewController {
             field = field.toLowerCase();
             switch(field){
                 case "id"-> foundOverview = overviewRepository.deleteById(Long.parseLong(value));
-                case "symbol"-> foundOverview = overviewRepository.deleteBySymbol(value);
-                case "asset"-> foundOverview = overviewRepository.deleteByAssetType(value);
-                case "sector"-> foundOverview = overviewRepository.deleteBySector(value);
                 case "name " -> foundOverview = overviewRepository.deleteByName(value);
+                case "symbol"-> foundOverview = overviewRepository.deleteBySymbol(value);
+                case "assettype"-> foundOverview = overviewRepository.deleteByAssetType(value);
+                case "sector"-> foundOverview = overviewRepository.deleteBySector(value);
                 case "currency" -> foundOverview = overviewRepository.deleteByCurrency(value);
                 case "country" -> foundOverview = overviewRepository.deleteByCountry(value);
                 case "exchange" -> foundOverview = overviewRepository.deleteByExchange(value);
+                case "marketcapgte" -> foundOverview = overviewRepository.deleteByMarketCapGreaterThanEqual(Long.parseLong(value));
+                case "marketcaplte" -> foundOverview = overviewRepository.deleteByMarketCapLessThanEqual(Long.parseLong(value));
+                case "yearhighgte" -> foundOverview = overviewRepository.deleteByYearHighGreaterThanEqual(Float.parseFloat(value));
+                case "yearhighlte" -> foundOverview = overviewRepository.deleteByYearHighLessThanEqual(Float.parseFloat(value));
+                case "yearlowgte" -> foundOverview = overviewRepository.deleteByYearLowGreaterThanEqual(Float.parseFloat(value));
+                case "yearlowlte" -> foundOverview = overviewRepository.deleteByYearLowLessThanEqual(Float.parseFloat(value));
             }
 
             if (foundOverview== null|| foundOverview.isEmpty()){
@@ -158,8 +179,10 @@ public class OverviewController {
 
      public ResponseEntity<?> uploadOverviewBySymbol(RestTemplate restTemplate, @PathVariable String symbol){
         try{
+
+            String apiKey = env.getProperty("AV_API_KEY");
           // we are  going to set the url
-           String url = BASE_URL + "&symbol= " + symbol + "&apikey="+ Api_Key;
+           String url = BASE_URL + "&symbol= " + symbol + "&apikey=" + apiKey;
          // this is the response
             Overview response = restTemplate.getForObject(url , Overview.class);
 
@@ -183,15 +206,16 @@ public class OverviewController {
         }
     }
 
-    @PostMapping("/testUpload")
+    @PostMapping("/testupload")
     public ResponseEntity<?> testUpload(RestTemplate restTemplate){
         try{
+            String apiKey = env.getProperty("AV_API_KEY");
             String [] testUploads = {"IBM","GOOG","AAPL","TM","GS"};
             ArrayList <Overview> overviews = new ArrayList<>();
             for(int i = 0 ; i < testUploads.length;i++){
                 String symbol = testUploads[i];
 
-                String url = BASE_URL +"&symbol=" + symbol + "&apikey=" + Api_Key;
+                String url = BASE_URL +"&symbol=" + symbol + "&apikey=" + apiKey ;
                 Overview alphaResponse = restTemplate.getForObject(url,Overview.class);
                 if(alphaResponse == null){
                     ApiError.throwErr(500, " No response from AV");
@@ -259,47 +283,47 @@ public class OverviewController {
 
     // creating a method for the 52 year high and low both float values.
 
-    @PostMapping("/{symbol}")
-    private ResponseEntity<?> testUploadOverview(RestTemplate restTemplate,@PathVariable String symbol) {
-        try {
-            String apiKey = env.getProperty("AV_API_KEY");
-
-            String url = BASE_URL + "&symbol="+ symbol +"&apikey="+apiKey;
-            Overview alphaVantageResponse = restTemplate.getForObject(url, Overview.class);
-
-
-            System.out.println(url);
-
-            // this is going to be a saved overview
-            Overview savedOverview = overviewRepository.save(alphaVantageResponse);
-
-
-
-            //checking to see if the data is null
-            if (alphaVantageResponse == null) {
-                ApiError.throwErr(500,"Did not recieve response from AV");
-
-            } else if (alphaVantageResponse.getSymbol() == null) {
-                ApiError.throwErr(404, "Invalid Stock Symbol"+symbol);
-
-            }
-
-
-            return ResponseEntity.ok(savedOverview);
-        }
-
-        // the way that these exceptions are ordered it will check them based
-        //on the type of error that it has found
-        catch (HttpClientErrorException e) {
-            return ApiError.customApiError(e.getMessage(), e.getStatusCode().value());}
-        catch(DataIntegrityViolationException e ){
-            return ApiError.customApiError("Can Not Create duplicate stocks", 400);
-        }
-
-        catch (Exception e) {
-            return ApiError.genericApiError(e);
-        }
-    }
+//    @PostMapping("/{symbol}")
+//    private ResponseEntity<?> testUploadOverview(RestTemplate restTemplate,@PathVariable String symbol) {
+//        try {
+//            String apiKey = env.getProperty("AV_API_KEY");
+//
+//            String url = BASE_URL + "&symbol="+ symbol +"&apikey="+apiKey;
+//            Overview alphaVantageResponse = restTemplate.getForObject(url, Overview.class);
+//
+//
+//            System.out.println(url);
+//
+//            // this is going to be a saved overview
+//            Overview savedOverview = overviewRepository.save(alphaVantageResponse);
+//
+//
+//
+//            //checking to see if the data is null
+//            if (alphaVantageResponse == null) {
+//                ApiError.throwErr(500,"Did not recieve response from AV");
+//
+//            } else if (alphaVantageResponse.getSymbol() == null) {
+//                ApiError.throwErr(404, "Invalid Stock Symbol"+symbol);
+//
+//            }
+//
+//
+//            return ResponseEntity.ok(savedOverview);
+//        }
+//
+//        // the way that these exceptions are ordered it will check them based
+//        //on the type of error that it has found
+//        catch (HttpClientErrorException e) {
+//            return ApiError.customApiError(e.getMessage(), e.getStatusCode().value());}
+//        catch(DataIntegrityViolationException e ){
+//            return ApiError.customApiError("Can Not Create duplicate stocks", 400);
+//        }
+//
+//        catch (Exception e) {
+//            return ApiError.genericApiError(e);
+//        }
+//    }
 
 
     // delete all OVERview from SQL database
